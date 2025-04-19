@@ -19,7 +19,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 
 	try {
 		const decoded = verifyToken(token)
-		console.log("decoded", decoded)
 
 		if (!decoded) {
 			return next({ status: 401, message: "Invalid token" })
