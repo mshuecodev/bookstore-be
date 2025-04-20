@@ -1,15 +1,17 @@
 import app from "./app"
-import { errorHandler, notFoundHandler } from "./middlewares/errorHandler"
+import { syncDatabase } from "./config/database"
 
 const PORT = process.env.PORT || 5000
 
-// app.use("/", (req, res) => {
-// 	res.send("Welcome to the Book Store API")
-// })
+const startServer = async () => {
+	try {
+		await syncDatabase()
+		app.listen(PORT, () => {
+			console.log(`Server is running on port ${PORT}`)
+		})
+	} catch (error) {
+		console.error("Error starting server:", error)
+	}
+}
 
-app.use(errorHandler)
-app.use(notFoundHandler)
-
-app.listen(PORT, () => {
-	console.log(`Server is running on port ${PORT}`)
-})
+startServer()
