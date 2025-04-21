@@ -14,16 +14,6 @@ export class User extends Model {
 	public active!: boolean
 	public lastLogin!: Date
 	public lastIp!: string
-
-	// Associations
-	public static associate() {
-		User.belongsToMany(Book, {
-			through: "BookAuthors",
-			foreignKey: "userId",
-			otherKey: "bookId",
-			as: "books"
-		})
-	}
 }
 
 User.init(

@@ -1,7 +1,6 @@
 import { DataTypes, Model } from "sequelize"
 import sequelize from "../config/database"
-import { User } from "./User"
-import { Genre } from "./Genre"
+import { Author, Genre } from "./index"
 
 export class Book extends Model {
 	public id!: number // Note that the `null assertion` `!` is required in strict mode
@@ -16,16 +15,17 @@ export class Book extends Model {
 	public readonly createdAt!: Date
 	public readonly updatedAt!: Date
 
-	public addAuthors!: (authors: User[]) => Promise<void>
+	public addAuthors!: (authors: Author[]) => Promise<void>
 	public addGenres!: (genres: Genre[]) => Promise<void>
-	public setAuthors!: (authors: User[]) => Promise<void>
+	public setAuthors!: (authors: Author[]) => Promise<void>
 	public setGenres!: (genres: Genre[]) => Promise<void>
 
 	public static associate() {
-		Book.belongsToMany(User, {
-			through: "BookAuthors",
+		// Many-to-Many: A Book can have many Authors
+		Book.belongsToMany(Author, {
+			through: "BookAuthors", // Junction table
 			foreignKey: "bookId",
-			otherKey: "userId",
+			otherKey: "authorId",
 			as: "authors"
 		})
 		Book.belongsToMany(Genre, {
