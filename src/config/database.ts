@@ -48,10 +48,6 @@ const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
 	logging: false // Disable logging; default: console.log
 })
 
-// Author.associate()
-// Book.associate()
-// Genre.associate()
-
 export const syncDatabase = async () => {
 	try {
 		await ensureDatabaseExists()
