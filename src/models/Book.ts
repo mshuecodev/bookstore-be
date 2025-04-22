@@ -72,6 +72,7 @@ Book.init(
 	},
 	{
 		sequelize,
-		modelName: "book"
+		modelName: "book",
+		tableName: "books"
 	}
 )

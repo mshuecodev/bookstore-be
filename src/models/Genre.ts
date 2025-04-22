@@ -49,6 +49,7 @@ Genre.init(
 	},
 	{
 		sequelize,
+		modelName: "genre",
 		tableName: "genres",
 		timestamps: true
 	}

@@ -52,5 +52,9 @@ User.init(
 			type: DataTypes.STRING
 		}
 	},
-	{ sequelize, modelName: "user" }
+	{
+		sequelize,
+		modelName: "users",
+		tableName: "users"
+	}
 )

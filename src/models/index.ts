@@ -1,3 +1,4 @@
+import sequelize from "../config/database"
 import { User } from "./User"
 import { Author } from "./Author"
 import { Book } from "./Book"

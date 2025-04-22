@@ -54,6 +54,7 @@ Author.init(
 	},
 	{
 		sequelize,
-		modelName: "author"
+		modelName: "author",
+		tableName: "authors"
 	}
 )
