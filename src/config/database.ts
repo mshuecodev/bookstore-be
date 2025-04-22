@@ -49,6 +49,7 @@ export const syncDatabase = async () => {
 		await sequelize.authenticate()
 		console.log("Connection to the database has been established successfully.")
 		await sequelize.sync({ force: false }) // Set to true for development to reset the database
+		console.log("Database synchronized successfully.")
 	} catch (error) {
 		console.error("Unable to connect to the database:", error)
 		throw error
