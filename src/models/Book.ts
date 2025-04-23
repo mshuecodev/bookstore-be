@@ -42,8 +42,8 @@ Book.init(
 		id: {
 			type: DataTypes.INTEGER,
 			autoIncrement: true,
-			primaryKey: true
-			// allowNull: false
+			primaryKey: true,
+			allowNull: false
 		},
 		title: {
 			type: DataTypes.STRING,
