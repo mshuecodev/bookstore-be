@@ -48,8 +48,9 @@ export const updateAuthorController = async (req: Request, res: Response) => {
 // Delete an author by ID
 export const deleteAuthorController = async (req: Request, res: Response) => {
 	try {
-		await deleteAuthor(Number(req.params.id))
-		res.status(204).send() // No content
+		let deletedAuthor = await deleteAuthor(Number(req.params.id))
+		// res.status(204).send() // No content
+		res.status(200).json(deletedAuthor)
 	} catch (error: any) {
 		res.status(500).json({ error: error.message })
 	}

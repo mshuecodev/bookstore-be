@@ -57,7 +57,8 @@ export const deleteAuthor = async (id: number) => {
 			throw new Error("Author not found")
 		}
 		await author.destroy()
-		return author
+		// return author
+		return { message: "Author deleted successfully" }
 	} catch (error: any) {
 		throw new Error(`Error deleting author: ${error.message}`)
 	}
