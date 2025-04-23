@@ -38,8 +38,9 @@ User.init(
 			allowNull: false
 		},
 		role: {
-			type: DataTypes.STRING,
-			allowNull: false
+			type: DataTypes.ENUM("customer", "admin", "author", "moderator"),
+			allowNull: false,
+			defaultValue: "customer"
 		},
 		active: {
 			type: DataTypes.BOOLEAN,
