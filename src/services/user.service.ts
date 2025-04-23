@@ -1,5 +1,6 @@
 import { User } from "../models/User"
 import bcrypt from "bcryptjs"
+import { NotFoundError } from "../middlewares/error.middleware"
 
 export const createUser = async (userData: any) => {
 	try {
@@ -26,7 +27,7 @@ export const getUserById = async (id: number) => {
 	try {
 		const user = await User.findByPk(id)
 		if (!user) {
-			throw new Error(`User with id ${id} not found`)
+			throw new NotFoundError(`User with id ${id} not found`)
 		}
 		return user
 	} catch (error) {
@@ -39,7 +40,7 @@ export const updateUser = async (id: number, userData: any) => {
 		const { password, ...rest } = userData
 		const user = await User.findByPk(id)
 		if (!user) {
-			throw new Error(`User with id ${id} not found`)
+			throw new NotFoundError(`User with id ${id} not found`)
 		}
 
 		const hashedPassword = password ? await bcrypt.hash(password, 10) : user.password
@@ -54,7 +55,7 @@ export const deleteUser = async (id: number) => {
 	try {
 		const user = await User.findByPk(id)
 		if (!user) {
-			throw new Error(`User with id ${id} not found`)
+			throw new NotFoundError(`User with id ${id} not found`)
 		}
 		await user.destroy()
 		return user

@@ -1,21 +1,18 @@
-import { Request, Response } from "express"
+import { Request, Response, NextFunction } from "express"
 import { registerUser, loginUser, refreshAccessToken } from "../services/auth.service"
 
-export const registerController = async (req: Request, res: Response) => {
+export const registerController = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { name, email, password } = req.body
-		if (!name || !email || !password) {
-			res.status(400).json({ message: "All fields are required" })
-		} else {
-			const user = await registerUser({ name, email, password })
-			res.status(201).json(user)
-		}
+
+		const result = await registerUser({ name, email, password })
+		res.status(201).json(result)
 	} catch (error: any) {
-		res.status(500).json({ message: "Internal server error" })
+		next(error) // Pass the error to the centralized error handler
 	}
 }
 
-export const loginController = async (req: Request, res: Response) => {
+export const loginController = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { email, password } = req.body
 		if (!email || !password) {
@@ -35,11 +32,11 @@ export const loginController = async (req: Request, res: Response) => {
 			})
 		}
 	} catch (error: any) {
-		res.status(500).json({ message: "Internal server error" })
+		next(error) // Pass the error to the centralized error handler
 	}
 }
 
-export const refreshController = async (req: Request, res: Response) => {
+export const refreshController = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { refreshToken } = req.body
 		if (!refreshToken) {
@@ -49,6 +46,6 @@ export const refreshController = async (req: Request, res: Response) => {
 			res.status(200).json({ accessToken })
 		}
 	} catch (error: any) {
-		res.status(500).json({ message: "Internal server error" })
+		next(error) // Pass the error to the centralized error handler
 	}
 }

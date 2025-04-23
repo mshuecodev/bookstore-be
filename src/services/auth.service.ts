@@ -1,5 +1,6 @@
 import { User } from "../models"
 import bcrypt from "bcryptjs"
+import { NotFoundError, ConflictError, ValidationError } from "../middlewares/error.middleware"
 
 import { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } from "../utils/jwt"
 
@@ -8,6 +9,11 @@ export const registerUser = async (userData: any) => {
 	const hashedPassword = await bcrypt.hash(password, 10)
 
 	try {
+		// Check if the user already exists
+		const existingUser = await User.findOne({ where: { email } })
+		if (existingUser) {
+			throw new ConflictError("User with this email already exists")
+		}
 		const user = await User.create({
 			name,
 			email,
@@ -19,9 +25,17 @@ export const registerUser = async (userData: any) => {
 		const accessToken = generateAccessToken({ id: user.id, email: user.email })
 		const refreshToken = generateRefreshToken({ id: user.id, email: user.email })
 
-		return { accessToken, refreshToken }
+		return {
+			accessToken,
+			refreshToken,
+			user: {
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				role: user.role
+			}
+		}
 	} catch (error) {
-		console.error("Error registering user:", error)
 		throw new Error("User registration failed")
 	}
 }
@@ -39,7 +53,6 @@ export const loginUser = async (email: string, password: string) => {
 
 		return { accessToken, refreshToken, user }
 	} catch (error) {
-		console.error("Error logging in user:", error)
 		throw new Error("User login failed")
 	}
 }
@@ -52,12 +65,13 @@ export const refreshAccessToken = async (refreshToken: string) => {
 		}
 		const user = await User.findByPk(decoded.id)
 
-		if (!user) throw new Error("User not found")
+		if (!user) {
+			throw new NotFoundError("User not found")
+		}
 
 		const newAccessToken = generateAccessToken({ id: user.id, email: user.email })
 		return { accessToken: newAccessToken }
 	} catch (error) {
-		console.error("Error refreshing access token:", error)
 		throw new Error("Token refresh failed")
 	}
 }
