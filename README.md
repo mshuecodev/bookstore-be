@@ -11,6 +11,9 @@ npx sequelize-cli init
 -   register (DONE)
 -   login (DONE)
 -   role-based access control (RBAC) (DONE)
+-   mfa function
+-   support multiple device login (trace)
+-   track logged in devices
 
 ## role type
 

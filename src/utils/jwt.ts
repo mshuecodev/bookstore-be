@@ -28,7 +28,8 @@ export const verifyAccessToken = (token: string): JwtPayload | string => {
 	if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined")
 
 	try {
-		return jwt.verify(token, JWT_SECRET)
+		const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
+		return decoded
 	} catch (error: any) {
 		throw new Error("Invalid or expired access token")
 	}
@@ -39,8 +40,18 @@ export const verifyRefreshToken = (token: string): JwtPayload | string => {
 	if (!REFRESH_TOKEN_SECRET) throw new Error("REFRESH_TOKEN_SECRET is not defined")
 
 	try {
-		return jwt.verify(token, REFRESH_TOKEN_SECRET)
+		const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET) as JwtPayload
+		return decoded
 	} catch (error: any) {
 		throw new Error("Invalid or expired refresh token")
+	}
+}
+
+// Decode a token without verification (optional utility)
+export const decodeToken = (token: string): JwtPayload | null => {
+	try {
+		return jwt.decode(token) as JwtPayload
+	} catch {
+		return null
 	}
 }

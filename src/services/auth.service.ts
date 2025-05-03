@@ -1,77 +1,154 @@
 import { User } from "../models"
+import { RefreshToken } from "../models/RefreshToken" // Assuming you have a RefreshToken model
 import bcrypt from "bcryptjs"
-import { NotFoundError, ConflictError, ValidationError } from "../middlewares/error.middleware"
+import { NotFoundError, ConflictError, ValidationError, AuthenticationError } from "../middlewares/error.middleware"
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt"
 
-import { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } from "../utils/jwt"
-
-export const registerUser = async (userData: any) => {
+// Register a new user
+export const registerUser = async (userData: { name: string; email: string; password: string }) => {
 	const { name, email, password } = userData
+
+	// Validate input
+	if (!name || !email || !password) {
+		throw new ValidationError("Name, email, and password are required")
+	}
+
+	// Check if the user already exists
+	const existingUser = await User.findOne({ where: { email } })
+	if (existingUser) {
+		throw new ConflictError("User with this email already exists")
+	}
+
+	// Hash the password
 	const hashedPassword = await bcrypt.hash(password, 10)
 
-	try {
-		// Check if the user already exists
-		const existingUser = await User.findOne({ where: { email } })
-		if (existingUser) {
-			throw new ConflictError("User with this email already exists")
-		}
-		const user = await User.create({
-			name,
-			email,
-			password: hashedPassword,
-			role: "user",
-			active: true
-		})
+	// Create the new user
+	const user = await User.create({
+		name,
+		email,
+		password: hashedPassword,
+		role: "customer", // Default role
+		active: true,
+		username: ""
+	})
 
-		const accessToken = generateAccessToken({ id: user.id, email: user.email })
-		const refreshToken = generateRefreshToken({ id: user.id, email: user.email })
+	// Generate tokens
+	const accessToken = generateAccessToken({ id: user.id, email: user.email })
+	const refreshToken = generateRefreshToken({ id: user.id, email: user.email })
 
-		return {
-			accessToken,
-			refreshToken,
-			user: {
-				id: user.id,
-				name: user.name,
-				email: user.email,
-				role: user.role
-			}
+	// Save the refresh token in the database
+	const expiresAt = new Date()
+	expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiration
+	await RefreshToken.create({
+		userId: user.id,
+		token: await bcrypt.hash(refreshToken, 10), // Hash the refresh token before saving
+		expiresAt
+	})
+
+	return {
+		accessToken,
+		refreshToken,
+		user: {
+			id: user.id,
+			name: user.name,
+			email: user.email,
+			role: user.role
 		}
-	} catch (error) {
-		throw new Error("User registration failed")
 	}
 }
 
+// Login a user
 export const loginUser = async (email: string, password: string) => {
-	try {
-		const user = await User.findOne({ where: { email } })
-		if (!user) throw new Error("User not found")
+	// Validate input
+	if (!email || !password) {
+		throw new ValidationError("Email and password are required")
+	}
 
-		const isPasswordValid = await bcrypt.compare(password, user.password)
-		if (!isPasswordValid) throw new Error("Invalid password")
+	// Find the user by email
+	const user = await User.findOne({ where: { email } })
+	if (!user) {
+		throw new AuthenticationError("Invalid email or password")
+	}
 
-		const accessToken = generateAccessToken({ id: user.id, email: user.email })
-		const refreshToken = generateRefreshToken({ id: user.id, email: user.email })
+	// Verify the password
+	const isPasswordValid = await bcrypt.compare(password, user.password)
+	if (!isPasswordValid) {
+		throw new AuthenticationError("Invalid email or password")
+	}
 
-		return { accessToken, refreshToken, user }
-	} catch (error) {
-		throw new Error("User login failed")
+	// Generate tokens
+	const accessToken = generateAccessToken({ id: user.id, email: user.email })
+	const refreshToken = generateRefreshToken({ id: user.id, email: user.email })
+
+	// Save the refresh token in the database
+	const expiresAt = new Date()
+	expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiration
+	await RefreshToken.create({
+		userId: user.id,
+		token: await bcrypt.hash(refreshToken, 10), // Hash the refresh token before saving
+		expiresAt
+	})
+
+	return {
+		accessToken,
+		refreshToken,
+		user: {
+			id: user.id,
+			name: user.name,
+			email: user.email,
+			role: user.role
+		}
 	}
 }
 
+// Refresh access token
 export const refreshAccessToken = async (refreshToken: string) => {
 	try {
+		// Verify the refresh token
 		const decoded = verifyRefreshToken(refreshToken)
 		if (typeof decoded !== "object" || !("id" in decoded)) {
-			throw new Error("Invalid token payload")
+			throw new AuthenticationError("Invalid refresh token")
 		}
-		const user = await User.findByPk(decoded.id)
 
+		// Find the user by ID
+		const user = await User.findByPk(decoded.id)
 		if (!user) {
 			throw new NotFoundError("User not found")
 		}
 
+		// Find the refresh token in the database
+		const storedToken = await RefreshToken.findOne({ where: { userId: user.id } })
+		if (!storedToken) {
+			throw new AuthenticationError("Refresh token not found")
+		}
+
+		// Verify the stored token
+		const isValid = await bcrypt.compare(refreshToken, storedToken.token)
+		if (!isValid) {
+			throw new AuthenticationError("Invalid refresh token")
+		}
+
+		// Check if the token has expired
+		if (new Date() > storedToken.expiresAt) {
+			throw new AuthenticationError("Refresh token has expired")
+		}
+
+		// Generate a new access token
 		const newAccessToken = generateAccessToken({ id: user.id, email: user.email })
 		return { accessToken: newAccessToken }
 	} catch (error) {
-		throw new Error("Token refresh failed")
+		throw new AuthenticationError("Token refresh failed")
 	}
+}
+
+// Logout a user (invalidate refresh token)
+export const logoutUser = async (userId: number) => {
+	const user = await User.findByPk(userId)
+	if (!user) {
+		throw new NotFoundError("User not found")
+	}
+
+	// Delete all refresh tokens for the user
+	await RefreshToken.destroy({ where: { userId } })
+	return { message: "User logged out successfully" }
 }
