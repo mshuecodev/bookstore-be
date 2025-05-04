@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express"
-import { registerUser, loginUser, refreshAccessToken, logoutUser } from "../services/auth.service"
+import { registerUser, loginUser, refreshAccessToken, logoutUser, generateResetToken, resetPassword } from "../services/auth.service"
 
 // Register a new user
 export const registerController = async (req: Request, res: Response, next: NextFunction) => {
@@ -80,5 +80,41 @@ export const logoutController = async (req: Request, res: Response, next: NextFu
 		res.status(200).json(result)
 	} catch (error: any) {
 		next(error) // Pass the error to the centralized error handler
+	}
+}
+
+export const requestPasswordResetController = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const { email } = req.body
+
+		if (!email) {
+			res.status(400).json({ message: "Email is required" })
+			return
+		}
+
+		const resetToken = await generateResetToken(email)
+
+		// Send the reset token via email (use a real email service in production)
+		console.log(`Password reset token for ${email}: ${resetToken}`)
+
+		res.status(200).json({ message: "Password reset email sent" })
+	} catch (error: any) {
+		next(error)
+	}
+}
+
+export const resetPasswordController = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const { token, newPassword } = req.body
+
+		if (!token || !newPassword) {
+			res.status(400).json({ message: "Token and new password are required" })
+			return
+		}
+
+		const result = await resetPassword(token, newPassword)
+		res.status(200).json(result)
+	} catch (error: any) {
+		next(error)
 	}
 }

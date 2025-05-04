@@ -17,6 +17,8 @@ interface UserAttributes {
 	dob?: string | null //date of birth
 	emailVerified?: boolean | false
 	twoFactorEnabled?: boolean | false
+	resetPasswordToken?: string | null
+	resetPasswordExpires?: Date | null
 	createdAt?: Date
 	updatedAt?: Date
 	deletedAt?: Date | null
@@ -41,6 +43,8 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
 	public dob!: string | null
 	public emailVerified!: boolean | false
 	public twoFactorEnabled!: boolean | false
+	public resetPasswordToken!: string | null
+	public resetPasswordExpires!: Date | null
 
 	public readonly createdAt!: Date
 	public readonly updatedAt!: Date
@@ -111,6 +115,14 @@ User.init(
 		twoFactorEnabled: {
 			type: DataTypes.BOOLEAN,
 			defaultValue: false
+		},
+		resetPasswordToken: {
+			type: DataTypes.STRING,
+			allowNull: true
+		},
+		resetPasswordExpires: {
+			type: DataTypes.DATE,
+			allowNull: true
 		}
 	},
 	{

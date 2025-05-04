@@ -3,6 +3,8 @@ import { RefreshToken } from "../models/RefreshToken" // Assuming you have a Ref
 import bcrypt from "bcryptjs"
 import { NotFoundError, ConflictError, ValidationError, AuthenticationError } from "../middlewares/error.middleware"
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt"
+import { Op } from "sequelize"
+import crypto from "crypto"
 
 // Register a new user
 export const registerUser = async (userData: { name: string; email: string; password: string }) => {
@@ -151,4 +153,65 @@ export const logoutUser = async (userId: number) => {
 	// Delete all refresh tokens for the user
 	await RefreshToken.destroy({ where: { userId } })
 	return { message: "User logged out successfully" }
+}
+
+export const generateResetToken = async (email: string) => {
+	// Find the user by email
+	const user = await User.findOne({ where: { email } })
+	if (!user) {
+		throw new Error("User not found")
+	}
+
+	// Generate a secure random token
+	const resetToken = crypto.randomBytes(32).toString("hex")
+
+	// Hash the token before saving it to the database
+	const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex")
+
+	// Set the reset token and expiration time (e.g., 1 hour)
+	const expiresAt = new Date()
+	expiresAt.setHours(expiresAt.getHours() + 1)
+
+	await user.update({
+		resetPasswordToken: hashedToken,
+		resetPasswordExpires: expiresAt
+	})
+
+	return resetToken // Return the plain token to send via email
+}
+
+export const validateResetToken = async (token: string) => {
+	// Hash the token to compare with the stored hashed token
+	const hashedToken = crypto.createHash("sha256").update(token).digest("hex")
+
+	// Find the user with the matching reset token and check expiration
+	const user = await User.findOne({
+		where: {
+			resetPasswordToken: hashedToken,
+			resetPasswordExpires: { [Op.gt]: new Date() } // Ensure the token is not expired
+		}
+	})
+
+	if (!user) {
+		throw new Error("Invalid or expired reset token")
+	}
+
+	return user
+}
+
+export const resetPassword = async (token: string, newPassword: string) => {
+	// Validate the reset token
+	const user = await validateResetToken(token)
+
+	// Hash the new password
+	const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+	// Update the user's password and clear the reset token
+	await user.update({
+		password: hashedPassword,
+		resetPasswordToken: null,
+		resetPasswordExpires: null
+	})
+
+	return { message: "Password reset successfully" }
 }

@@ -14,6 +14,7 @@ npx sequelize-cli init
 -   mfa function
 -   support multiple device login (trace)
 -   track logged in devices
+-   reset password flow
 
 ## role type
 
