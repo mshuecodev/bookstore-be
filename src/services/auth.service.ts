@@ -7,8 +7,8 @@ import { Op } from "sequelize"
 import crypto from "crypto"
 
 // Register a new user
-export const registerUser = async (userData: { name: string; email: string; password: string }) => {
-	const { name, email, password } = userData
+export const registerUser = async (userData: { name: string; email: string; password: string; role: "customer" | "admin" | "author" | "moderator" }) => {
+	const { name, email, password, role } = userData
 
 	// Validate input
 	if (!name || !email || !password) {
@@ -24,12 +24,14 @@ export const registerUser = async (userData: { name: string; email: string; pass
 	// Hash the password
 	const hashedPassword = await bcrypt.hash(password, 10)
 
+	const userRole = role || "customer"
+
 	// Create the new user
 	const user = await User.create({
 		name,
 		email,
 		password: hashedPassword,
-		role: "customer", // Default role
+		role: userRole, // Default role
 		active: true,
 		username: ""
 	})

@@ -4,7 +4,7 @@ import { registerUser, loginUser, refreshAccessToken, logoutUser, generateResetT
 // Register a new user
 export const registerController = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const { name, email, password } = req.body
+		const { name, email, password, role } = req.body
 
 		// Validate input
 		if (!name || !email || !password) {
@@ -12,7 +12,7 @@ export const registerController = async (req: Request, res: Response, next: Next
 			return
 		}
 
-		const result = await registerUser({ name, email, password })
+		const result = await registerUser({ name, email, password, role })
 		res.status(201).json(result)
 	} catch (error: any) {
 		next(error) // Pass the error to the centralized error handler
