@@ -3,7 +3,7 @@ import dotenv from "dotenv"
 dotenv.config()
 
 const JWT_SECRET = process.env.JWT_SECRET || ""
-const JWT_EXPIRATION = process.env.JWT_EXPIRATION || "1h"
+const JWT_EXPIRATION = process.env.JWT_EXPIRATION || "10s"
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || ""
 const REFRESH_TOKEN_EXPIRATION = process.env.REFRESH_TOKEN_EXPIRATION || "30d"
 
