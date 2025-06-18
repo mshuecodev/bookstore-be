@@ -18,8 +18,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 	} else {
 		const token = authHeader.split(" ")[1]
 
-		console.log("blacklistedTokens:", blacklistedTokens)
-
 		if (blacklistedTokens.has(token)) {
 			res.status(401).json({ message: "Token has been revoked" })
 		} else {
@@ -27,8 +25,12 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 				const decoded = verifyAccessToken(token)
 				req.user = decoded // Attach the user information to the request object
 				next()
-			} catch (error) {
-				res.status(401).json({ message: "Unauthorized" })
+			} catch (error: any) {
+				if (error.name === "TokenExpiredError") {
+					res.status(401).json({ message: "Token has expired" })
+					return
+				}
+				res.status(401).json({ message: "Invalid token" })
 			}
 		}
 	}

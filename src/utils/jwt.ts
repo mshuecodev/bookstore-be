@@ -31,7 +31,7 @@ export const verifyAccessToken = (token: string): JwtPayload | string => {
 		const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
 		return decoded
 	} catch (error: any) {
-		throw new Error("Invalid or expired access token")
+		throw error
 	}
 }
 
