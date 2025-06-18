@@ -5,9 +5,9 @@ import { authenticate, authorize } from "../middlewares/auth.middleware"
 const router = express.Router()
 
 router.post("/", authenticate, authorize(["admin"]), createBookController)
-router.get("/", getAllBooksController)
-router.get("/:id", getBookByIdController)
-router.put("/:id", updateBookController)
-router.delete("/:id", deleteBookController)
+router.get("/", authenticate, getAllBooksController)
+router.get("/:id", authenticate, getBookByIdController)
+router.put("/:id", authenticate, updateBookController)
+router.delete("/:id", authenticate, deleteBookController)
 
 export default router

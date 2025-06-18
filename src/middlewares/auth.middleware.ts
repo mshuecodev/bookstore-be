@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express"
 import { verifyAccessToken } from "../utils/jwt"
-
+import { blacklistedTokens } from "../services/auth.service"
 // Extend the Request interface to include the user property
 declare global {
 	namespace Express {
@@ -14,16 +14,22 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 	const authHeader = req.headers["authorization"]
 
 	if (!authHeader || !authHeader.startsWith("Bearer ")) {
-		res.status(401).json({ message: "Unauthorized" })
+		res.status(401).json({ message: "Authorization header is missing or invalid" })
 	} else {
 		const token = authHeader.split(" ")[1]
 
-		try {
-			const decoded = verifyAccessToken(token)
-			req.user = decoded // Attach the user information to the request object
-			next()
-		} catch (error) {
-			res.status(401).json({ message: "Unauthorized" })
+		console.log("blacklistedTokens:", blacklistedTokens)
+
+		if (blacklistedTokens.has(token)) {
+			res.status(401).json({ message: "Token has been revoked" })
+		} else {
+			try {
+				const decoded = verifyAccessToken(token)
+				req.user = decoded // Attach the user information to the request object
+				next()
+			} catch (error) {
+				res.status(401).json({ message: "Unauthorized" })
+			}
 		}
 	}
 }

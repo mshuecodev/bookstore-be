@@ -55,3 +55,10 @@ export const decodeToken = (token: string): JwtPayload | null => {
 		return null
 	}
 }
+
+export const getTokenExpiryInSeconds = (token: string): number => {
+	const decoded = jwt.decode(token) as JwtPayload
+	if (!decoded || !decoded.exp) return 0
+	const now = Math.floor(Date.now() / 1000)
+	return Math.max(decoded.exp - now, 0)
+}

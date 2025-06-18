@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express"
 import { registerUser, loginUser, refreshAccessToken, logoutUser, generateResetToken, resetPassword } from "../services/auth.service"
+import { getTokenExpiryInSeconds } from "../utils/jwt"
 
 // Register a new user
 export const registerController = async (req: Request, res: Response, next: NextFunction) => {
@@ -67,17 +68,23 @@ export const refreshController = async (req: Request, res: Response, next: NextF
 
 // Logout a user
 export const logoutController = async (req: Request, res: Response, next: NextFunction) => {
+	const authHeader = req.headers["authorization"]
+	const accessToken = authHeader?.split(" ")[1]
+	// const userId = req.user?.id
+
+	console.log("accessToken:", accessToken)
+
 	try {
 		const { userId } = req.body
 
-		// Validate input
-		if (!userId) {
-			res.status(400).json({ message: "User ID is required" })
+		if (!userId || !accessToken) {
+			res.status(400).json({ message: "Missing user or token" })
 			return
 		}
+		const expiresInSeconds = getTokenExpiryInSeconds(accessToken)
 
-		const result = await logoutUser(userId)
-		res.status(200).json(result)
+		await logoutUser(userId, accessToken, expiresInSeconds)
+		res.json({ message: "Logged out" })
 	} catch (error: any) {
 		next(error) // Pass the error to the centralized error handler
 	}

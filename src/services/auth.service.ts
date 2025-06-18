@@ -145,8 +145,15 @@ export const refreshAccessToken = async (refreshToken: string) => {
 	}
 }
 
+export const blacklistedTokens = new Set<string>() // can Replace with Redis or DB in production
+
+export const blacklistAccessToken = (token: string, expiresInSeconds: number) => {
+	blacklistedTokens.add(token)
+	setTimeout(() => blacklistedTokens.delete(token), expiresInSeconds * 1000)
+}
+
 // Logout a user (invalidate refresh token)
-export const logoutUser = async (userId: number) => {
+export const logoutUser = async (userId: number, accessToken?: string, expiresInSeconds?: number | 10) => {
 	const user = await User.findByPk(userId)
 	if (!user) {
 		throw new NotFoundError("User not found")
@@ -154,6 +161,9 @@ export const logoutUser = async (userId: number) => {
 
 	// Delete all refresh tokens for the user
 	await RefreshToken.destroy({ where: { userId } })
+	if (accessToken && expiresInSeconds) {
+		blacklistAccessToken(accessToken, expiresInSeconds)
+	}
 	return { message: "User logged out successfully" }
 }
 
